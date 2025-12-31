@@ -3,7 +3,6 @@
 //  MovieA
 //
 //  Created by Jojo on 31/12/2025.
-//
 import Foundation
 
 struct Welcome: Codable {
@@ -12,28 +11,17 @@ struct Welcome: Codable {
 
 struct Record: Codable {
     let id: String
+    let createdTime: String
     let fields: Fields
 }
 
 struct Fields: Codable {
     let name: String?
+    let poster: String?        // تم تغييره إلى String لأن Airtable يرسله كرابط نصي
     let story: String?
     let runtime: String?
-    let imDBRating: Double?
     let genre: [String]?
-    let rating: String? // حولناه لـ String لضمان عدم الخطأ
+    let rating: String?
+    let IMDb_rating: Double?   // يجب أن يطابق الاسم في Airtable تماماً
     let language: [String]?
-
-    // تعديل حقل البوستر ليتوافق مع Airtable
-    let poster: [AirtableAttachment]?
-
-    enum CodingKeys: String, CodingKey {
-        case name, story, runtime, genre, rating, language
-        case imDBRating = "IMDb_rating"
-        case poster
-    }
-}
-
-struct AirtableAttachment: Codable {
-    let url: String
 }
