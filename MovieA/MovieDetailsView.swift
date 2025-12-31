@@ -4,7 +4,6 @@
 //
 //  Created by Jojo on 31/12/2025.
 //
-
 import SwiftUI
 
 struct MovieDetailsView: View {
@@ -15,17 +14,37 @@ struct MovieDetailsView: View {
             Color.black.ignoresSafeArea()
 
             if viewModel.isLoading {
-                ProgressView("Loading...")
+                VStack {
+                    ProgressView()
+                        .tint(.white)
+                        .scaleEffect(1.5)
+                    Text("Loading Movie Details...")
+                        .foregroundColor(.gray)
+                        .padding(.top)
+                }
             } else if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundColor(.red)
+                    Text(errorMessage)
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                    Button("Retry") {
+                        viewModel.fetchMovieDetails()
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                }
+                .padding()
             } else if let movie = viewModel.movie {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
+                        // تعديل تمرير الرابط هنا لأنه أصبح String مباشراً
                         HeaderSection(
                             movieName: movie.name ?? "Untitled",
-                            posterURL: movie.poster?.first?.url ?? ""
+                            posterURL: movie.poster ?? ""
                         )
 
                         VStack(alignment: .leading, spacing: 25) {
@@ -37,14 +56,16 @@ struct MovieDetailsView: View {
                             )
 
                             StorySection(story: movie.story ?? "No story available.")
-                            CastSection() // إذا عندك بيانات ديناميكية للطاقم، يمكن إضافتها لاحقًا
+                            
+                            CastSection()
 
                             Rectangle()
-                                .frame(width: 355, height: 1)
+                                .frame(height: 1)
                                 .foregroundColor(.gray.opacity(0.3))
                                 .padding(.vertical, 10)
 
-                            RatingsAndReviewsSection() // ممكن تبقي كما هي مؤقتًا
+                            // عرض التقييم القادم من السيرفر بشكل ديناميكي
+                            RatingsAndReviewsSection(rating: movie.IMDb_rating ?? 0.0)
                         }
                         .padding(.horizontal)
                         .padding(.top, 20)
@@ -63,16 +84,23 @@ struct HeaderSection: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            AsyncImage(url: URL(string: posterURL)) { image in
-                image.resizable().aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Color.gray
+            AsyncImage(url: URL(string: posterURL)) { phase in
+                switch phase {
+                case .success(let image):
+                    image.resizable().aspectRatio(contentMode: .fill)
+                case .failure:
+                    Color.gray // تظهر لو الرابط تعطل
+                case .empty:
+                    ProgressView().tint(.white)
+                @unknown default:
+                    EmptyView()
+                }
             }
-            .frame(width: 390, height: 448)
+            .frame(width: UIScreen.main.bounds.width, height: 448)
             .clipped()
 
             LinearGradient(
-                gradient: Gradient(colors: [.clear, .black.opacity(0.8)]),
+                gradient: Gradient(colors: [.clear, .black.opacity(0.9)]),
                 startPoint: .center,
                 endPoint: .bottom
             )
@@ -83,34 +111,34 @@ struct HeaderSection: View {
                         .padding(10)
                         .background(.ultraThinMaterial)
                         .clipShape(Circle())
-                        .foregroundColor(Color("AccentColor"))
+                        .foregroundColor(.white)
                     Spacer()
                     HStack(spacing: 20) {
                         Image(systemName: "square.and.arrow.up")
                             .padding(10)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
-                            .foregroundColor(Color("AccentColor"))
+                            .foregroundColor(.white)
                         Image(systemName: "bookmark")
                             .padding(10)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
-                            .foregroundColor(Color("AccentColor"))
+                            .foregroundColor(.white)
                     }
                 }
-                .foregroundColor(.white)
                 .padding(.top, 60)
                 .padding(.horizontal)
                 Spacer()
             }
 
             Text(movieName)
-                .font(.system(size: 35, weight: .bold))
+                .font(.system(size: 32, weight: .bold))
                 .foregroundColor(.white)
                 .padding(.leading, 20)
                 .padding(.bottom, 20)
+                .shadow(radius: 10)
         }
-        .frame(width: 390, height: 448)
+        .frame(height: 448)
     }
 }
 
@@ -155,54 +183,59 @@ struct StorySection: View {
     }
 }
 
-// MARK: - Cast Section
+// MARK: - Cast Section (ثابت حالياً)
 struct CastSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Text("Director").font(.headline).foregroundColor(.white)
-            Image("Director")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 76, height: 76)
-                .clipShape(Circle())
-            Text("Frank Darabont")
-                .font(.footnote)
-                .foregroundColor(.white)
+            HStack {
+                Image(systemName: "person.crop.circle.fill") // استبدلتها بأيقونة لو الصور غير متوفرة
+                    .resizable()
+                    .frame(width: 50, height: 50)
+                    .foregroundColor(.gray)
+                Text("Frank Darabont")
+                    .font(.footnote)
+                    .foregroundColor(.white)
+            }
 
             Text("Stars").font(.headline).foregroundColor(.white)
             HStack(spacing: 25) {
-                castMember(imageName: "Tim", name: "Tim Robbins")
-                castMember(imageName: "Morgan", name: "Morgan Freeman")
-                castMember(imageName: "Bob", name: "Bob Gunton")
+                castMember(name: "Tim Robbins")
+                castMember(name: "Morgan Freeman")
+                castMember(name: "Bob Gunton")
             }
         }
     }
 
-    func castMember(imageName: String, name: String) -> some View {
+    func castMember(name: String) -> some View {
         VStack(spacing: 6) {
-            Image(imageName)
+            Image(systemName: "person.circle")
                 .resizable()
-                .scaledToFit()
-                .frame(width: 76, height: 76)
-                .clipShape(Circle())
+                .frame(width: 60, height: 60)
+                .foregroundColor(.gray)
             Text(name)
-                .font(.system(size: 12))
+                .font(.system(size: 10))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
+                .frame(width: 70)
         }
     }
 }
 
 // MARK: - Ratings & Reviews Section
 struct RatingsAndReviewsSection: View {
+    let rating: Double
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Text("Rating & Reviews").font(.headline).foregroundColor(.white)
             VStack(alignment: .leading) {
-                Text("4.8").font(.system(size: 45, weight: .bold)).foregroundColor(.white)
-                Text("out of 5").font(.caption).foregroundColor(.gray)
-                Text("⭐⭐⭐⭐").font(.caption)
+                Text(String(format: "%.1f", rating))
+                    .font(.system(size: 45, weight: .bold))
+                    .foregroundColor(.white)
+                Text("out of 10 (IMDb)").font(.caption).foregroundColor(.gray)
             }
+            
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
                     ReviewCard(reviewerName: "Afnan Abdullah")
@@ -222,10 +255,14 @@ struct ReviewCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
-                Image(getAvatar(for: reviewerName))
+                Image(systemName: "person.fill")
                     .resizable()
+                    .padding(8)
                     .frame(width: 40, height: 40)
+                    .background(Color.gray.opacity(0.3))
                     .clipShape(Circle())
+                    .foregroundColor(.white)
+                
                 VStack(alignment: .leading) {
                     Text(reviewerName)
                         .font(.system(size: 14, weight: .bold))
@@ -234,7 +271,7 @@ struct ReviewCard: View {
                 }
                 Spacer()
             }
-            Text("This is an engagingly simple, good-hearted film, with just enough darkness around the edges to give contrast and relief to its glowingly benign view of human nature.")
+            Text("This is an engagingly simple, good-hearted film, with just enough darkness around the edges to give contrast.")
                 .font(.system(size: 12))
                 .foregroundColor(.gray)
                 .lineLimit(4)
@@ -245,26 +282,16 @@ struct ReviewCard: View {
             }
         }
         .padding()
-        .frame(width: 305, height: 188)
-        .background(Color.white.opacity(0.1))
+        .frame(width: 305, height: 160)
+        .background(Color.white.opacity(0.05))
         .cornerRadius(15)
-    }
-
-    func getAvatar(for name: String) -> String {
-        switch name {
-        case "Afnan Abdullah": return "Avatar1"
-        case "Sara Alqahtani": return "Avatar2"
-        case "Mohammed Ali": return "Avatar3"
-        default: return "DefaultAvatar"
-        }
     }
 }
 
 // MARK: - Preview
 struct MovieDetailsView_Previews: PreviewProvider {
     static var previews: some View {
-        MovieDetailsView(viewModel: MovieDetailsViewModel(movieID: "anyID"))
+        MovieDetailsView(viewModel: MovieDetailsViewModel(movieID: "recfNj1e4waOUJLxd"))
             .preferredColorScheme(.dark)
-            .previewDevice("iPhone 15 Pro")
     }
 }
