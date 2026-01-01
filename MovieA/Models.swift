@@ -25,3 +25,30 @@ struct Fields: Codable {
     let IMDb_rating: Double?   // يجب أن يطابق الاسم في Airtable تماماً
     let language: [String]?
 }
+// MARK: - Users (Airtable "users" table)
+
+// Top-level response for /users
+struct UsersResponse: Codable {
+    let records: [UserRecord]
+}
+
+// Each Airtable record for users
+struct UserRecord: Codable, Identifiable {
+    let id: String
+    let createdTime: String
+    let fields: UserFields
+}
+
+// Inner fields for a user record
+// Renamed from `Field` -> `UserFields` to avoid confusion with movie `Fields`
+struct UserFields: Codable {
+    let name: String
+    let password: String
+    let email: String
+    let profileImage: String
+
+    enum CodingKeys: String, CodingKey {
+        case name, password, email
+        case profileImage = "profile_image"
+    }
+}
