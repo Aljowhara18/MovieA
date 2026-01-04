@@ -4,6 +4,7 @@
 //
 //  Created by Jojo on 31/12/2025.
 //
+
 import SwiftUI
 
 struct MovieDetailsView: View {
@@ -22,14 +23,17 @@ struct MovieDetailsView: View {
                         .foregroundColor(.gray)
                         .padding(.top)
                 }
+
             } else if let errorMessage = viewModel.errorMessage {
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.red)
+
                     Text(errorMessage)
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
+
                     Button("Retry") {
                         viewModel.fetchMovieDetails()
                     }
@@ -38,25 +42,27 @@ struct MovieDetailsView: View {
                     .cornerRadius(10)
                 }
                 .padding()
+
             } else if let movie = viewModel.movie {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
-                        // تعديل تمرير الرابط هنا لأنه أصبح String مباشراً
+
                         HeaderSection(
-                            movieName: movie.name ?? "Untitled",
-                            posterURL: movie.poster ?? ""
+                            movieName: movie.title,
+                            posterURL: movie.posterURL
                         )
 
                         VStack(alignment: .leading, spacing: 25) {
                             InfoGridView(
-                                duration: movie.runtime ?? "—",
-                                language: (movie.language ?? []).joined(separator: ", "),
-                                genre: (movie.genre ?? []).joined(separator: ", "),
-                                age: movie.rating ?? "—"
+                                duration: movie.runtime.isEmpty ? "—" : movie.runtime,
+                                language: movie.language.isEmpty ? "—" : movie.language.joined(separator: ", "),
+                                genre: movie.genre.isEmpty ? "—" : movie.genre.joined(separator: ", "),
+                                age: movie.ageRating.isEmpty ? "—" : movie.ageRating
                             )
 
-                            StorySection(story: movie.story ?? "No story available.")
-                            
+                            StorySection(story: movie.story.isEmpty ? "No story available." : movie.story)
+
+                            // (Optional) Later connect API actors here
                             CastSection()
 
                             Rectangle()
@@ -64,8 +70,7 @@ struct MovieDetailsView: View {
                                 .foregroundColor(.gray.opacity(0.3))
                                 .padding(.vertical, 10)
 
-                            // عرض التقييم القادم من السيرفر بشكل ديناميكي
-                            RatingsAndReviewsSection(rating: movie.IMDb_rating ?? 0.0)
+                            RatingsAndReviewsSection(rating: movie.imdbRating ?? 0.0)
                         }
                         .padding(.horizontal)
                         .padding(.top, 20)
@@ -80,31 +85,44 @@ struct MovieDetailsView: View {
 // MARK: - Header Section
 struct HeaderSection: View {
     let movieName: String
-    let posterURL: String
+    let posterURL: URL?
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            AsyncImage(url: URL(string: posterURL)) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable().aspectRatio(contentMode: .fill)
-                case .failure:
-                    Color.gray // تظهر لو الرابط تعطل
-                case .empty:
-                    ProgressView().tint(.white)
-                @unknown default:
-                    EmptyView()
+
+            // Poster
+            Group {
+                if let url = posterURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().aspectRatio(contentMode: .fill)
+                        case .failure:
+                            Color.gray
+                        case .empty:
+                            ZStack {
+                                Color.black.opacity(0.2)
+                                ProgressView().tint(.white)
+                            }
+                        @unknown default:
+                            Color.gray
+                        }
+                    }
+                } else {
+                    Color.gray
                 }
             }
             .frame(width: UIScreen.main.bounds.width, height: 448)
             .clipped()
 
+            // Gradient
             LinearGradient(
                 gradient: Gradient(colors: [.clear, .black.opacity(0.9)]),
                 startPoint: .center,
                 endPoint: .bottom
             )
 
+            // Top buttons (UI only)
             VStack {
                 HStack {
                     Image(systemName: "chevron.left")
@@ -112,13 +130,16 @@ struct HeaderSection: View {
                         .background(.ultraThinMaterial)
                         .clipShape(Circle())
                         .foregroundColor(.white)
+
                     Spacer()
+
                     HStack(spacing: 20) {
                         Image(systemName: "square.and.arrow.up")
                             .padding(10)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
                             .foregroundColor(.white)
+
                         Image(systemName: "bookmark")
                             .padding(10)
                             .background(.ultraThinMaterial)
@@ -128,9 +149,11 @@ struct HeaderSection: View {
                 }
                 .padding(.top, 60)
                 .padding(.horizontal)
+
                 Spacer()
             }
 
+            // Movie Title
             Text(movieName)
                 .font(.system(size: 32, weight: .bold))
                 .foregroundColor(.white)
@@ -162,8 +185,12 @@ struct InfoGridView: View {
 
     func infoItem(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title).font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-            Text(value).font(.system(size: 14)).foregroundColor(.gray)
+            Text(title)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+            Text(value)
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
         }
     }
 }
@@ -174,7 +201,10 @@ struct StorySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Story").font(.headline).foregroundColor(.white)
+            Text("Story")
+                .font(.headline)
+                .foregroundColor(.white)
+
             Text(story)
                 .font(.system(size: 14))
                 .foregroundColor(.gray)
@@ -183,22 +213,25 @@ struct StorySection: View {
     }
 }
 
-// MARK: - Cast Section (ثابت حالياً)
+// MARK: - Cast Section (static placeholder for now)
 struct CastSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Text("Director").font(.headline).foregroundColor(.white)
+
             HStack {
-                Image(systemName: "person.crop.circle.fill") // استبدلتها بأيقونة لو الصور غير متوفرة
+                Image(systemName: "person.crop.circle.fill")
                     .resizable()
                     .frame(width: 50, height: 50)
                     .foregroundColor(.gray)
+
                 Text("Frank Darabont")
                     .font(.footnote)
                     .foregroundColor(.white)
             }
 
             Text("Stars").font(.headline).foregroundColor(.white)
+
             HStack(spacing: 25) {
                 castMember(name: "Tim Robbins")
                 castMember(name: "Morgan Freeman")
@@ -213,6 +246,7 @@ struct CastSection: View {
                 .resizable()
                 .frame(width: 60, height: 60)
                 .foregroundColor(.gray)
+
             Text(name)
                 .font(.system(size: 10))
                 .foregroundColor(.white)
@@ -225,17 +259,23 @@ struct CastSection: View {
 // MARK: - Ratings & Reviews Section
 struct RatingsAndReviewsSection: View {
     let rating: Double
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text("Rating & Reviews").font(.headline).foregroundColor(.white)
+            Text("Rating & Reviews")
+                .font(.headline)
+                .foregroundColor(.white)
+
             VStack(alignment: .leading) {
                 Text(String(format: "%.1f", rating))
                     .font(.system(size: 45, weight: .bold))
                     .foregroundColor(.white)
-                Text("out of 10 (IMDb)").font(.caption).foregroundColor(.gray)
+
+                Text("out of 10 (IMDb)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
             }
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
                     ReviewCard(reviewerName: "Afnan Abdullah")
@@ -262,23 +302,30 @@ struct ReviewCard: View {
                     .background(Color.gray.opacity(0.3))
                     .clipShape(Circle())
                     .foregroundColor(.white)
-                
+
                 VStack(alignment: .leading) {
                     Text(reviewerName)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
-                    Text("⭐⭐⭐⭐").font(.system(size: 10))
+
+                    Text("⭐⭐⭐⭐")
+                        .font(.system(size: 10))
                 }
                 Spacer()
             }
+
             Text("This is an engagingly simple, good-hearted film, with just enough darkness around the edges to give contrast.")
                 .font(.system(size: 12))
                 .foregroundColor(.gray)
                 .lineLimit(4)
+
             Spacer()
+
             HStack {
                 Spacer()
-                Text("Tuesday").font(.system(size: 10)).foregroundColor(.gray)
+                Text("Tuesday")
+                    .font(.system(size: 10))
+                    .foregroundColor(.gray)
             }
         }
         .padding()
