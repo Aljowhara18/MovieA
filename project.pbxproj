@@ -6,13 +6,47 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		EBD8F79E2F0520EF00724B8C /* MovieDetailsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F79B2F0520EF00724B8C /* MovieDetailsViewModel.swift */; };
+		EBD8F79F2F0520EF00724B8C /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F7972F0520EF00724B8C /* Item.swift */; };
+		EBD8F7A02F0520EF00724B8C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F7952F0520EF00724B8C /* ContentView.swift */; };
+		EBD8F7A12F0520EF00724B8C /* MovieAApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F7992F0520EF00724B8C /* MovieAApp.swift */; };
+		EBD8F7A22F0520EF00724B8C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F7982F0520EF00724B8C /* Models.swift */; };
+		EBD8F7A32F0520EF00724B8C /* MovieDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F79A2F0520EF00724B8C /* MovieDetailsView.swift */; };
+		EBD8F7A42F0520EF00724B8C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBD8F7942F0520EF00724B8C /* Assets.xcassets */; };
+		EBD8F7A62F0520EF00724B8C /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = EBD8F79C2F0520EF00724B8C /* Secrets.xcconfig */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		EBD8F75E2F05012B00724B8C /* MovieA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MovieA.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EBD8F7942F0520EF00724B8C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		EBD8F7952F0520EF00724B8C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		EBD8F7962F0520EF00724B8C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EBD8F7972F0520EF00724B8C /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		EBD8F7982F0520EF00724B8C /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		EBD8F7992F0520EF00724B8C /* MovieAApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovieAApp.swift; sourceTree = "<group>"; };
+		EBD8F79A2F0520EF00724B8C /* MovieDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovieDetailsView.swift; sourceTree = "<group>"; };
+		EBD8F79B2F0520EF00724B8C /* MovieDetailsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovieDetailsViewModel.swift; sourceTree = "<group>"; };
+		EBD8F79C2F0520EF00724B8C /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		EBD8F77B2F050A2A00724B8C /* Exceptions for "MovieA" folder in "MovieA" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				Secrets.xcconfig,
+			);
+			target = EBD8F75D2F05012B00724B8C /* MovieA */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		EBD8F7602F05012B00724B8C /* MovieA */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				EBD8F77B2F050A2A00724B8C /* Exceptions for "MovieA" folder in "MovieA" target */,
+			);
 			path = MovieA;
 			sourceTree = "<group>";
 		};
@@ -34,6 +68,7 @@
 			children = (
 				EBD8F7602F05012B00724B8C /* MovieA */,
 				EBD8F75F2F05012B00724B8C /* Products */,
+				EBD8F79D2F0520EF00724B8C /* MovieA */,
 			);
 			sourceTree = "<group>";
 		};
@@ -43,6 +78,22 @@
 				EBD8F75E2F05012B00724B8C /* MovieA.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		EBD8F79D2F0520EF00724B8C /* MovieA */ = {
+			isa = PBXGroup;
+			children = (
+				EBD8F7942F0520EF00724B8C /* Assets.xcassets */,
+				EBD8F7952F0520EF00724B8C /* ContentView.swift */,
+				EBD8F7962F0520EF00724B8C /* Info.plist */,
+				EBD8F7972F0520EF00724B8C /* Item.swift */,
+				EBD8F7982F0520EF00724B8C /* Models.swift */,
+				EBD8F7992F0520EF00724B8C /* MovieAApp.swift */,
+				EBD8F79A2F0520EF00724B8C /* MovieDetailsView.swift */,
+				EBD8F79B2F0520EF00724B8C /* MovieDetailsViewModel.swift */,
+				EBD8F79C2F0520EF00724B8C /* Secrets.xcconfig */,
+			);
+			path = MovieA;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -109,6 +160,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EBD8F7A42F0520EF00724B8C /* Assets.xcassets in Resources */,
+				EBD8F7A62F0520EF00724B8C /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,6 +172,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EBD8F79E2F0520EF00724B8C /* MovieDetailsViewModel.swift in Sources */,
+				EBD8F79F2F0520EF00724B8C /* Item.swift in Sources */,
+				EBD8F7A02F0520EF00724B8C /* ContentView.swift in Sources */,
+				EBD8F7A12F0520EF00724B8C /* MovieAApp.swift in Sources */,
+				EBD8F7A22F0520EF00724B8C /* Models.swift in Sources */,
+				EBD8F7A32F0520EF00724B8C /* MovieDetailsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,6 +186,7 @@
 /* Begin XCBuildConfiguration section */
 		EBD8F7692F05012B00724B8C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EBD8F79C2F0520EF00724B8C /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -191,6 +251,7 @@
 		};
 		EBD8F76A2F05012B00724B8C /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EBD8F79C2F0520EF00724B8C /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -248,6 +309,7 @@
 		};
 		EBD8F76C2F05012B00724B8C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EBD8F79C2F0520EF00724B8C /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -256,6 +318,11 @@
 				DEVELOPMENT_TEAM = 4C88H9734X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -266,7 +333,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.aljowhara.MovieA;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jojo.MovieA;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -280,6 +347,7 @@
 		};
 		EBD8F76D2F05012B00724B8C /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EBD8F79C2F0520EF00724B8C /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -288,6 +356,11 @@
 				DEVELOPMENT_TEAM = 4C88H9734X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -298,7 +371,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.aljowhara.MovieA;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jojo.MovieA;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
