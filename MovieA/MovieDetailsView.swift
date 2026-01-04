@@ -4,6 +4,11 @@
 //
 //  Created by Jojo on 31/12/2025.
 //
+//  MovieDetailsView.swift
+//  MovieA
+//
+//  Created by Jojo on 31/12/2025.
+//
 import SwiftUI
 
 struct MovieDetailsView: View {
@@ -22,14 +27,17 @@ struct MovieDetailsView: View {
                         .foregroundColor(.gray)
                         .padding(.top)
                 }
+
             } else if let errorMessage = viewModel.errorMessage {
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.red)
+
                     Text(errorMessage)
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
+
                     Button("Retry") {
                         viewModel.fetchMovieDetails()
                     }
@@ -38,34 +46,35 @@ struct MovieDetailsView: View {
                     .cornerRadius(10)
                 }
                 .padding()
+
             } else if let movie = viewModel.movie {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
-                        // تعديل تمرير الرابط هنا لأنه أصبح String مباشراً
+
                         HeaderSection(
-                            movieName: movie.name ?? "Untitled",
-                            posterURL: movie.poster ?? ""
+                            movieName: movie.title,
+                            posterURL: movie.posterURL
                         )
 
                         VStack(alignment: .leading, spacing: 25) {
                             InfoGridView(
-                                duration: movie.runtime ?? "—",
-                                language: (movie.language ?? []).joined(separator: ", "),
-                                genre: (movie.genre ?? []).joined(separator: ", "),
-                                age: movie.rating ?? "—"
+                                duration: movie.runtime.isEmpty ? "—" : movie.runtime,
+                                language: movie.language.isEmpty ? "—" : movie.language.joined(separator: ", "),
+                                genre: movie.genre.isEmpty ? "—" : movie.genre.joined(separator: ", "),
+                                age: movie.ageRating.isEmpty ? "—" : movie.ageRating
                             )
 
-                            StorySection(story: movie.story ?? "No story available.")
-                            
-                            CastSection()
+                            StorySection(story: movie.story.isEmpty ? "No story available." : movie.story)
+
+                            // تم تمرير المخرج من الـ ViewModel هنا
+                            CastSection(director: viewModel.director)
 
                             Rectangle()
                                 .frame(height: 1)
                                 .foregroundColor(.gray.opacity(0.3))
                                 .padding(.vertical, 10)
 
-                            // عرض التقييم القادم من السيرفر بشكل ديناميكي
-                            RatingsAndReviewsSection(rating: movie.IMDb_rating ?? 0.0)
+                            RatingsAndReviewsSection(rating: movie.imdbRating ?? 0.0)
                         }
                         .padding(.horizontal)
                         .padding(.top, 20)
@@ -80,20 +89,29 @@ struct MovieDetailsView: View {
 // MARK: - Header Section
 struct HeaderSection: View {
     let movieName: String
-    let posterURL: String
+    let posterURL: URL?
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            AsyncImage(url: URL(string: posterURL)) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable().aspectRatio(contentMode: .fill)
-                case .failure:
-                    Color.gray // تظهر لو الرابط تعطل
-                case .empty:
-                    ProgressView().tint(.white)
-                @unknown default:
-                    EmptyView()
+            Group {
+                if let url = posterURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().aspectRatio(contentMode: .fill)
+                        case .failure:
+                            Color.gray
+                        case .empty:
+                            ZStack {
+                                Color.black.opacity(0.2)
+                                ProgressView().tint(.white)
+                            }
+                        @unknown default:
+                            Color.gray
+                        }
+                    }
+                } else {
+                    Color.gray
                 }
             }
             .frame(width: UIScreen.main.bounds.width, height: 448)
@@ -112,13 +130,16 @@ struct HeaderSection: View {
                         .background(.ultraThinMaterial)
                         .clipShape(Circle())
                         .foregroundColor(.white)
+
                     Spacer()
+
                     HStack(spacing: 20) {
                         Image(systemName: "square.and.arrow.up")
                             .padding(10)
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
                             .foregroundColor(.white)
+
                         Image(systemName: "bookmark")
                             .padding(10)
                             .background(.ultraThinMaterial)
@@ -128,6 +149,7 @@ struct HeaderSection: View {
                 }
                 .padding(.top, 60)
                 .padding(.horizontal)
+
                 Spacer()
             }
 
@@ -162,8 +184,12 @@ struct InfoGridView: View {
 
     func infoItem(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title).font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-            Text(value).font(.system(size: 14)).foregroundColor(.gray)
+            Text(title)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+            Text(value)
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
         }
     }
 }
@@ -174,7 +200,10 @@ struct StorySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Story").font(.headline).foregroundColor(.white)
+            Text("Story")
+                .font(.headline)
+                .foregroundColor(.white)
+
             Text(story)
                 .font(.system(size: 14))
                 .foregroundColor(.gray)
@@ -183,22 +212,31 @@ struct StorySection: View {
     }
 }
 
-// MARK: - Cast Section (ثابت حالياً)
+// MARK: - Cast Section (تحديث لعرض المخرج الحقيقي)
+// MARK: - Cast Section
 struct CastSection: View {
+    let director: Director?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text("Director").font(.headline).foregroundColor(.white)
-            HStack {
-                Image(systemName: "person.crop.circle.fill") // استبدلتها بأيقونة لو الصور غير متوفرة
-                    .resizable()
-                    .frame(width: 50, height: 50)
-                    .foregroundColor(.gray)
-                Text("Frank Darabont")
-                    .font(.footnote)
-                    .foregroundColor(.white)
+            // عنوان قسم المخرج
+            Text("Director")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            if let director = director {
+                // نستخدم نفس تصميم الممثلين للمخرج
+                directorItem(name: director.name, url: director.imageURL)
+            } else {
+                // حالة التحميل (Placeholder)
+                directorItem(name: "Loading...", url: nil)
             }
 
-            Text("Stars").font(.headline).foregroundColor(.white)
+            // عنوان قسم الممثلين
+            Text("Stars")
+                .font(.headline)
+                .foregroundColor(.white)
+
             HStack(spacing: 25) {
                 castMember(name: "Tim Robbins")
                 castMember(name: "Morgan Freeman")
@@ -207,12 +245,42 @@ struct CastSection: View {
         }
     }
 
+    // دالة خاصة للمخرج بنفس ستايل الـ castMember تماماً
+    // الدالة المحدثة للمخرج ليكون الاسم في سطر واحد
+        func directorItem(name: String, url: URL?) -> some View {
+            VStack(spacing: 6) {
+                Group {
+                    if let url = url {
+                        AsyncImage(url: url) { image in
+                            image.resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Color.gray.opacity(0.3)
+                        }
+                    } else {
+                        Image(systemName: "person.circle")
+                            .resizable()
+                            .foregroundColor(.gray)
+                    }
+                }
+                .frame(width: 60, height: 60)
+                .clipShape(Circle())
+
+                Text(name)
+                    .font(.system(size: 10))
+                    .foregroundColor(.white)
+                    .lineLimit(1) // يمنع النزول لسطر جديد
+                    .fixedSize(horizontal: true, vertical: false) // يسمح للنص بالتمدد أفقياً
+            }
+        }
+    // دالة الممثلين الحالية (للمقارنة والتأكد من التطابق)
     func castMember(name: String) -> some View {
         VStack(spacing: 6) {
             Image(systemName: "person.circle")
                 .resizable()
                 .frame(width: 60, height: 60)
                 .foregroundColor(.gray)
+
             Text(name)
                 .font(.system(size: 10))
                 .foregroundColor(.white)
@@ -222,20 +290,42 @@ struct CastSection: View {
     }
 }
 
+    func castMember(name: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: "person.circle")
+                .resizable()
+                .frame(width: 60, height: 60)
+                .foregroundColor(.gray)
+
+            Text(name)
+                .font(.system(size: 10))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .frame(width: 70)
+        }
+    }
+
+
 // MARK: - Ratings & Reviews Section
 struct RatingsAndReviewsSection: View {
     let rating: Double
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text("Rating & Reviews").font(.headline).foregroundColor(.white)
+            Text("Rating & Reviews")
+                .font(.headline)
+                .foregroundColor(.white)
+
             VStack(alignment: .leading) {
                 Text(String(format: "%.1f", rating))
                     .font(.system(size: 45, weight: .bold))
                     .foregroundColor(.white)
-                Text("out of 10 (IMDb)").font(.caption).foregroundColor(.gray)
+
+                Text("out of 10 (IMDb)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
             }
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
                     ReviewCard(reviewerName: "Afnan Abdullah")
@@ -262,23 +352,30 @@ struct ReviewCard: View {
                     .background(Color.gray.opacity(0.3))
                     .clipShape(Circle())
                     .foregroundColor(.white)
-                
+
                 VStack(alignment: .leading) {
                     Text(reviewerName)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
-                    Text("⭐⭐⭐⭐").font(.system(size: 10))
+
+                    Text("⭐⭐⭐⭐")
+                        .font(.system(size: 10))
                 }
                 Spacer()
             }
+
             Text("This is an engagingly simple, good-hearted film, with just enough darkness around the edges to give contrast.")
                 .font(.system(size: 12))
                 .foregroundColor(.gray)
                 .lineLimit(4)
+
             Spacer()
+
             HStack {
                 Spacer()
-                Text("Tuesday").font(.system(size: 10)).foregroundColor(.gray)
+                Text("Tuesday")
+                    .font(.system(size: 10))
+                    .foregroundColor(.gray)
             }
         }
         .padding()
@@ -287,10 +384,10 @@ struct ReviewCard: View {
         .cornerRadius(15)
     }
 }
-
 // MARK: - Preview
 struct MovieDetailsView_Previews: PreviewProvider {
     static var previews: some View {
+        // نمرر ID موجود فعلياً في بياناتك لتجربة العرض
         MovieDetailsView(viewModel: MovieDetailsViewModel(movieID: "recfNj1e4waOUJLxd"))
             .preferredColorScheme(.dark)
     }
