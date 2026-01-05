@@ -10,9 +10,22 @@
 		EBD8F75E2F05012B00724B8C /* MovieA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MovieA.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		31AE09652F0BC2DF00BA82F1 /* Exceptions for "MovieA" folder in "MovieA" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = EBD8F75D2F05012B00724B8C /* MovieA */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		EBD8F7602F05012B00724B8C /* MovieA */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				31AE09652F0BC2DF00BA82F1 /* Exceptions for "MovieA" folder in "MovieA" target */,
+			);
 			path = MovieA;
 			sourceTree = "<group>";
 		};
