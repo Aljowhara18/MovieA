@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum MovieService {
+enum AirtableMovieService {
 
     // ✅ Put these in one place (same as your MovieDetailsViewModel)
     private static let manualToken = "REDACTED_TOKEN"
@@ -24,7 +24,7 @@ enum MovieService {
 
         // Optional: check status code
         if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-            throw NSError(domain: "MovieService",
+            throw NSError(domain: "AirtableMovieService",
                           code: http.statusCode,
                           userInfo: [NSLocalizedDescriptionKey: "Server error: \(http.statusCode)"])
         }
@@ -43,7 +43,7 @@ enum MovieService {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-            throw NSError(domain: "MovieService",
+            throw NSError(domain: "AirtableMovieService",
                           code: http.statusCode,
                           userInfo: [NSLocalizedDescriptionKey: "Server error: \(http.statusCode)"])
         }

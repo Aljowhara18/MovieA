@@ -240,136 +240,149 @@ import Foundation
 import SwiftUI
 import Combine
 
+
+@MainActor
 final class MovieDetailsViewModel: ObservableObject {
+    // MARK: - Published Properties (تحديث الواجهة تلقائياً)
     @Published var movie: Movie?
     @Published var director: Director?
     @Published var actors: [Actor] = []
     @Published var reviews: [Review] = []
     @Published var isLoading = false
-
-    let movieID: String
+    
+    // MARK: - Constants
+    private let movieID: String
+    private let baseURL = "https://api.airtable.com/v0/appsfcB6YESLj4NCN"
     private let token = "REDACTED_TOKEN"
 
     init(movieID: String) {
         self.movieID = movieID
-        fetchMovieDetails()
+        Task {
+            await loadAllData()
+        }
     }
 
-    func fetchMovieDetails() {
-        guard let url = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN/movies") else { return }
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-
+    // MARK: - Logic Functions
+    
+    /// الدالة الأساسية لتحميل البيانات بالتوازي
+    func loadAllData() async {
         isLoading = true
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
-            guard let data = data else { return }
-            if let decoded = try? JSONDecoder().decode(MoviesResponse.self, from: data) {
-                DispatchQueue.main.async {
-                    if let found = decoded.records.first(where: { $0.id == self?.movieID }) {
-                        self?.movie = Movie(from: found)
-                        self?.fetchCastAndReviews(for: found)
-                    }
-                }
-            }
-        }.resume()
+        await fetchMovieDetails()
+        isLoading = false
     }
 
-    func fetchCastAndReviews(for movieRecord: MovieRecord) {
-        let group = DispatchGroup()
-        let movieName = movieRecord.fields.name ?? ""
-        let movieRecordID = movieRecord.id
-
-        // 1. منطق المخرجين (الذي انمحى وأعدته الآن)
-        group.enter()
-        let dirURL = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN/directors")!
-        var dirReq = URLRequest(url: dirURL)
-        dirReq.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        URLSession.shared.dataTask(with: dirReq) { [weak self] data, _, _ in
-            if let data = data, let decoded = try? JSONDecoder().decode(DirectorsResponse.self, from: data) {
-                let allDirs = decoded.records.map(Director.init)
-                DispatchQueue.main.async {
-                    let m = movieName.lowercased()
-                    if m.contains("shawshank") { self?.director = allDirs.first { $0.name.contains("Frank") } }
-                    else if m.contains("top gun") { self?.director = allDirs.first { $0.name.contains("Tony") } }
-                    else if m.contains("pitch perfect") || m.contains("shotgun") { self?.director = allDirs.first { $0.name.contains("Jason") } }
-                    else { self?.director = allDirs.first }
-                    group.leave()
-                }
-            } else { group.leave() }
-        }.resume()
-
-        // 2. منطق الممثلين (الذي انمحى وأعدته الآن)
-        group.enter()
-        let actURL = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN/actors")!
-        var actReq = URLRequest(url: actURL)
-        actReq.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        URLSession.shared.dataTask(with: actReq) { [weak self] data, _, _ in
-            if let data = data, let decoded = try? JSONDecoder().decode(ActorsResponse.self, from: data) {
-                let allActors = decoded.records.map(Actor.init)
-                DispatchQueue.main.async {
-                    let m = movieName.lowercased()
-                    if m.contains("shawshank") {
-                        self?.actors = allActors.filter { ["Tim Robbins", "Morgan Freeman", "Bob Gunton"].contains($0.name) }
-                    } else if m.contains("top gun") {
-                        self?.actors = allActors.filter { ["Tom Cruise", "Val Kilmer", "Kelly McGillis"].contains($0.name) }
-                    } else if m.contains("pitch perfect") || m.contains("shotgun") {
-                        self?.actors = allActors.filter { ["Jennifer Lopez", "Josh Duhamel", "Jennifer Coolidge"].contains($0.name) }
-                    } else {
-                        self?.actors = Array(allActors.prefix(3))
-                    }
-                    group.leave()
-                }
-            } else { group.leave() }
-        }.resume()
-
-        // 3. جلب جميع الريفيوز (مع فلتر لضمان ظهور تعليقات الجميع)
-        group.enter()
-        let filter = "movie_id='\(movieRecordID)'"
-        let encodedFilter = filter.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        let urlString = "https://api.airtable.com/v0/appsfcB6YESLj4NCN/reviews?filterByFormula=\(encodedFilter)"
+    // 1. جلب تفاصيل الفيلم
+    private func fetchMovieDetails() async {
+        guard let url = URL(string: "\(baseURL)/movies") else { return }
         
-        var request = URLRequest(url: URL(string: urlString)!)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
-            if let data = data, let decoded = try? JSONDecoder().decode(ReviewsResponse.self, from: data) {
-                DispatchQueue.main.async {
-                    self?.reviews = decoded.records.map(Review.init)
+        do {
+            let response: MoviesResponse = try await makeRequest(url: url)
+            if let found = response.records.first(where: { $0.id == movieID }) {
+                self.movie = Movie(from: found)
+                
+                // جلب البيانات المرتبطة بعد التأكد من وجود الفيلم
+                await withTaskGroup(of: Void.self) { group in
+                    group.addTask { await self.fetchReviews() }
+                    group.addTask { await self.fetchCast(movieName: found.fields.name ?? "") }
+                    group.addTask { await self.fetchDirector(movieName: found.fields.name ?? "") }
                 }
             }
-            DispatchQueue.main.async { group.leave() }
-        }.resume()
-
-        group.notify(queue: .main) { self.isLoading = false }
+        } catch {
+            print("Error: \(error)")
+        }
     }
 
-    func postReview(text: String, rate: Int) {
-        guard let url = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN/reviews") else { return }
-        let body: [String: Any] = ["fields": ["review_text": text, "rate": rate, "movie_id": self.movieID, "user_id": "Guest_User"]]
+    // 2. جلب التقييمات (مع فلترة من السيرفر)
+    private func fetchReviews() async {
+        let filter = "movie_id='\(movieID)'"
+        let encodedFilter = filter.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        guard let url = URL(string: "\(baseURL)/reviews?filterByFormula=\(encodedFilter)") else { return }
+
+        do {
+            let response: ReviewsResponse = try await makeRequest(url: url)
+            self.reviews = response.records.map(Review.init)
+        } catch {
+            print("Reviews Error: \(error)")
+        }
+    }
+
+    // 3. جلب الممثلين (Mock Logic بناءً على اسم الفيلم)
+    private func fetchCast(movieName: String) async {
+        guard let url = URL(string: "\(baseURL)/actors") else { return }
+        do {
+            let response: ActorsResponse = try await makeRequest(url: url)
+            let allActors = response.records.map(Actor.init)
+            let m = movieName.lowercased()
+            
+            if m.contains("shawshank") {
+                self.actors = allActors.filter { ["Tim Robbins", "Morgan Freeman", "Bob Gunton"].contains($0.name) }
+            } else if m.contains("top gun") {
+                self.actors = allActors.filter { ["Tom Cruise", "Val Kilmer", "Kelly McGillis"].contains($0.name) }
+            } else {
+                self.actors = Array(allActors.prefix(3))
+            }
+        } catch { }
+    }
+
+    // 4. جلب المخرج
+    private func fetchDirector(movieName: String) async {
+        guard let url = URL(string: "\(baseURL)/directors") else { return }
+        do {
+            let response: DirectorsResponse = try await makeRequest(url: url)
+            let allDirs = response.records.map(Director.init)
+            let m = movieName.lowercased()
+            
+            if m.contains("shawshank") { self.director = allDirs.first { $0.name.contains("Frank") } }
+            else { self.director = allDirs.first }
+        } catch { }
+    }
+
+    // 5. إضافة تقييم
+    func postReview(text: String, rate: Int) async {
+        guard let url = URL(string: "\(baseURL)/reviews") else { return }
+        let body: [String: Any] = [
+            "fields": ["review_text": text, "rate": rate, "movie_id": self.movieID, "user_id": "Guest_User"]
+        ]
+        
+        do {
+            let _: ReviewRecord = try await makeRequest(url: url, method: "POST", body: body)
+            await fetchReviews() // تحديث القائمة فوراً
+        } catch { }
+    }
+
+    // 6. حذف تقييم
+    func deleteReview(reviewID: String) async {
+        guard let url = URL(string: "\(baseURL)/reviews/\(reviewID)") else { return }
+        do {
+            // في Airtable الحذف يعيد كود نجاح، لا نحتاج لفك تشفير بيانات معينة هنا
+            var request = URLRequest(url: url)
+            request.httpMethod = "DELETE"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            _ = try await URLSession.shared.data(for: request)
+            
+            self.reviews.removeAll { $0.id == reviewID }
+        } catch { }
+    }
+
+    // MARK: - Generic Networking Engine (احترافي جداً)
+    private func makeRequest<T: Codable>(url: URL, method: String = "GET", body: [String: Any]? = nil) async throws -> T {
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        request.httpMethod = method
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
-            if data != nil {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    self?.fetchMovieDetails()
-                }
-            }
-        }.resume()
-    }
-
-    func deleteReview(reviewID: String) {
-        guard let url = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN/reviews/\(reviewID)") else { return }
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        URLSession.shared.dataTask(with: request) { [weak self] _, _, _ in
-            DispatchQueue.main.async { self?.reviews.removeAll { $0.id == reviewID } }
-        }.resume()
+        if let body = body {
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        // التأكد من أن الرد سليم (Status Code 200)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        
+        return try JSONDecoder().decode(T.self, from: data)
     }
 }

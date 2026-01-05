@@ -775,9 +775,11 @@ struct MovieDetailsView: View {
                                     
                                     Button(action: {
                                         if !newReviewText.isEmpty {
-                                            viewModel.postReview(text: newReviewText, rate: 5)
-                                            newReviewText = ""
-                                            hideKeyboard()
+                                            Task {
+                                                await viewModel.postReview(text: newReviewText, rate: 5)
+                                                newReviewText = ""
+                                                hideKeyboard()
+                                            }
                                         }
                                     }) {
                                         Image(systemName: "paperplane.fill")
@@ -795,7 +797,7 @@ struct MovieDetailsView: View {
                                 rating: movie.imdbRating ?? 0.0,
                                 reviews: viewModel.reviews,
                                 onDelete: { reviewID in
-                                    viewModel.deleteReview(reviewID: reviewID)
+                                    Task { await viewModel.deleteReview(reviewID: reviewID) }
                                 }
                             )
                         }
@@ -1004,3 +1006,4 @@ struct MovieDetailsView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+
