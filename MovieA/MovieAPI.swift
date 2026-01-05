@@ -20,19 +20,15 @@ import Foundation
 enum APIConfig {
     static let baseURL = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN")!
 
-    // Reads token from Info.plist under key "AIRTABLE_API_TOKEN"
+    // Read API token from Info.plist key "API_TOKEN" (or env var fallback)
     static var token: String {
-        // Prefer main bundle Info.plist
-        if let token = Bundle.main.object(forInfoDictionaryKey: "API_TOKEN") as? String, !token.isEmpty {
-            return token
+        if let v = Bundle.main.object(forInfoDictionaryKey: "API_TOKEN") as? String, !v.isEmpty {
+            return v
         }
-
-        // Optional fallback: environment variable (can be set by XCConfig or CI)
         if let env = ProcessInfo.processInfo.environment["API_TOKEN"], !env.isEmpty {
             return env
         }
-
-        assertionFailure("Missing Airtable API token. Add AIRTABLE_API_TOKEN to Info.plist or environment.")
+        assertionFailure("Missing API_TOKEN in Info.plist or environment.")
         return ""
     }
 }
@@ -41,8 +37,37 @@ enum APIConfig {
 
 enum APIClient {
 
+    // GET list endpoint: decodes any Decodable T
     static func get<T: Decodable>(table: String) async throws -> T {
         let url = APIConfig.baseURL.appendingPathComponent(table)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(APIConfig.token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let http = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+
+        guard (200...299).contains(http.statusCode) else {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            throw NSError(
+                domain: "APIClient",
+                code: http.statusCode,
+                userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode): \(body)"]
+            )
+        }
+
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    // GET single record by recordId: /:table/:recordId
+    static func getRecord<T: Decodable>(table: String, id: String) async throws -> T {
+        let url = APIConfig.baseURL
+            .appendingPathComponent(table)
+            .appendingPathComponent(id)
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -91,5 +116,10 @@ enum UserServices {
     static func fetchUsers() async throws -> [UserRecord] {
         let response: UsersResponse = try await APIClient.get(table: "users")
         return response.records
+    }
+
+    // Option A: Retrieve a single user by Airtable record id
+    static func fetchUser(id: String) async throws -> UserRecord {
+        try await APIClient.getRecord(table: "users", id: id)
     }
 }
