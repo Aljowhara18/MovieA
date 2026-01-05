@@ -13,7 +13,19 @@
 //
 
 import Foundation
-import Foundation
+
+// MARK: - Airtable Error Models
+
+struct AirtableAPIError: Codable, LocalizedError {
+    let type: String
+    let message: String
+
+    var errorDescription: String? { message }
+}
+
+struct AirtableErrorResponse: Codable {
+    let error: AirtableAPIError
+}
 
 // MARK: - API Config (Token + Base URL)
 
@@ -37,13 +49,40 @@ enum APIConfig {
 
 enum APIClient {
 
-    // GET list endpoint: decodes any Decodable T
-    static func get<T: Decodable>(table: String) async throws -> T {
-        let url = APIConfig.baseURL.appendingPathComponent(table)
-
+    private static func authorizedRequest(url: URL) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(APIConfig.token)", forHTTPHeaderField: "Authorization")
+        return request
+    }
+
+    private static func decodeOrThrowAPIError(_ data: Data, statusCode: Int) throws -> Never {
+        // Try to decode Airtable error payload
+        if let apiErr = try? JSONDecoder().decode(AirtableErrorResponse.self, from: data) {
+            // Preserve HTTP status in NSError for callers that check code
+            throw NSError(
+                domain: "Airtable",
+                code: statusCode,
+                userInfo: [
+                    NSLocalizedDescriptionKey: apiErr.error.message,
+                    "type": apiErr.error.type
+                ]
+            )
+        }
+
+        // Fallback to raw body if decoding fails
+        let body = String(data: data, encoding: .utf8) ?? ""
+        throw NSError(
+            domain: "APIClient",
+            code: statusCode,
+            userInfo: [NSLocalizedDescriptionKey: "HTTP \(statusCode): \(body)"]
+        )
+    }
+
+    // GET list endpoint: decodes any Decodable T
+    static func get<T: Decodable>(table: String) async throws -> T {
+        let url = APIConfig.baseURL.appendingPathComponent(table)
+        let request = authorizedRequest(url: url)
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -52,12 +91,7 @@ enum APIClient {
         }
 
         guard (200...299).contains(http.statusCode) else {
-            let body = String(data: data, encoding: .utf8) ?? ""
-            throw NSError(
-                domain: "APIClient",
-                code: http.statusCode,
-                userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode): \(body)"]
-            )
+            try decodeOrThrowAPIError(data, statusCode: http.statusCode)
         }
 
         return try JSONDecoder().decode(T.self, from: data)
@@ -69,9 +103,7 @@ enum APIClient {
             .appendingPathComponent(table)
             .appendingPathComponent(id)
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(APIConfig.token)", forHTTPHeaderField: "Authorization")
+        let request = authorizedRequest(url: url)
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -80,12 +112,7 @@ enum APIClient {
         }
 
         guard (200...299).contains(http.statusCode) else {
-            let body = String(data: data, encoding: .utf8) ?? ""
-            throw NSError(
-                domain: "APIClient",
-                code: http.statusCode,
-                userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode): \(body)"]
-            )
+            try decodeOrThrowAPIError(data, statusCode: http.statusCode)
         }
 
         return try JSONDecoder().decode(T.self, from: data)
@@ -123,3 +150,4 @@ enum UserServices {
         try await APIClient.getRecord(table: "users", id: id)
     }
 }
+
