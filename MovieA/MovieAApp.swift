@@ -25,7 +25,7 @@ struct MovieAApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SignIn()
         }
         .modelContainer(sharedModelContainer)
     }
