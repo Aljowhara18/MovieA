@@ -3,13 +3,6 @@
 //  MovieA
 //
 //  Created by Jojo on 31/12/2025.
-//
-//
-//  Models.swift
-//  MovieA
-//
-//  Created by Jojo on 31/12/2025.
-//
 
 import Foundation
 
@@ -187,6 +180,7 @@ struct Actor: Identifiable {
         }
     }
 }
+
 // MARK: - Directors Models
 struct DirectorsResponse: Codable {
     let records: [DirectorRecord]
@@ -211,5 +205,38 @@ struct Director: Identifiable {
         self.id = record.id
         self.name = record.fields.name ?? "Unknown Director"
         self.imageURL = URL(string: record.fields.image ?? "")
+    }
+}
+// MARK: - Review Models
+struct ReviewsResponse: Codable {
+    let records: [ReviewRecord]
+}
+
+struct ReviewRecord: Codable, Identifiable {
+    let id: String
+    let fields: ReviewFields
+}
+
+struct ReviewFields: Codable {
+    let rate: Double?
+    let review_text: String?
+    let movie_id: String?
+    let user_id: String?
+}
+
+
+struct Review: Identifiable {
+    let id: String
+    let rating: Double
+    let text: String
+    let movieID: String
+    let userName: String // سنستخدم الـ user_id كاسم مؤقتاً
+
+    init(from record: ReviewRecord) {
+        self.id = record.id
+        self.rating = record.fields.rate ?? 0.0
+        self.text = record.fields.review_text ?? ""
+        self.movieID = record.fields.movie_id ?? ""
+        self.userName = record.fields.user_id ?? "Guest User"
     }
 }
