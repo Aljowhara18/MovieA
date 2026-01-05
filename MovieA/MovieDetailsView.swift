@@ -954,16 +954,28 @@ struct ReviewCard: View {
 }
 
 // MARK: - InfoGridView & StorySection
+// MARK: - InfoGridView (تم تعديله ليكون جهة اليسار)
 struct InfoGridView: View {
     let duration, language, genre, age: String
+    
+    // التعديل هنا: جعلنا الأعمدة تأخذ حجم المحتوى فقط .weighted(0) أو محددة
+    // واستخدمنا محاذاة Leading
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-            infoItem(title: "Duration", value: duration)
-            infoItem(title: "Language", value: language)
-            infoItem(title: "Genre", value: genre)
-            infoItem(title: "Age", value: age)
+        VStack(alignment: .leading) {
+            LazyVGrid(columns: [
+                GridItem(.flexible(), alignment: .leading),
+                GridItem(.flexible(), alignment: .leading)
+            ], spacing: 20) {
+                infoItem(title: "Duration", value: duration)
+                infoItem(title: "Language", value: language)
+                infoItem(title: "Genre", value: genre)
+                infoItem(title: "Age", value: age)
+            }
+            // لضمان سحب الشبكة بالكامل لليسار وعدم توسيعها بقوة في المنتصف
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
+    
     func infoItem(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.system(size: 14, weight: .bold)).foregroundColor(.white)
