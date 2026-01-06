@@ -19,7 +19,7 @@ struct MoviesCenter: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color("Dark1").ignoresSafeArea()
+                Color(.black).ignoresSafeArea()
 
                 content
                     .searchable(

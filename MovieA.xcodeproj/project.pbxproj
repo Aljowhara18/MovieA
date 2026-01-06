@@ -7,12 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		EBD8F79E2F0520EF00724B8C /* MovieDetailsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F79B2F0520EF00724B8C /* MovieDetailsViewModel.swift */; };
 		EBD8F79F2F0520EF00724B8C /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F7972F0520EF00724B8C /* Item.swift */; };
-		EBD8F7A02F0520EF00724B8C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F7952F0520EF00724B8C /* ContentView.swift */; };
 		EBD8F7A12F0520EF00724B8C /* MovieAApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F7992F0520EF00724B8C /* MovieAApp.swift */; };
-		EBD8F7A22F0520EF00724B8C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F7982F0520EF00724B8C /* Models.swift */; };
-		EBD8F7A32F0520EF00724B8C /* MovieDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD8F79A2F0520EF00724B8C /* MovieDetailsView.swift */; };
 		EBD8F7A42F0520EF00724B8C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBD8F7942F0520EF00724B8C /* Assets.xcassets */; };
 		EBD8F7A62F0520EF00724B8C /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = EBD8F79C2F0520EF00724B8C /* Secrets.xcconfig */; };
 /* End PBXBuildFile section */
@@ -34,7 +30,10 @@
 		EBD8F77B2F050A2A00724B8C /* Exceptions for "MovieA" folder in "MovieA" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Assets.xcassets,
 				Info.plist,
+				Item.swift,
+				MovieAApp.swift,
 				Secrets.xcconfig,
 			);
 			target = EBD8F75D2F05012B00724B8C /* MovieA */;
@@ -172,12 +171,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EBD8F79E2F0520EF00724B8C /* MovieDetailsViewModel.swift in Sources */,
 				EBD8F79F2F0520EF00724B8C /* Item.swift in Sources */,
-				EBD8F7A02F0520EF00724B8C /* ContentView.swift in Sources */,
 				EBD8F7A12F0520EF00724B8C /* MovieAApp.swift in Sources */,
-				EBD8F7A22F0520EF00724B8C /* Models.swift in Sources */,
-				EBD8F7A32F0520EF00724B8C /* MovieDetailsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

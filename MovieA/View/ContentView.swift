@@ -1,10 +1,12 @@
 //
 //  ContentView.swift
+
 //  MovieApp-Team8-M
 //
 //  Created by Deemah Alhazmi on 23/12/2025.
 //
 //  ContentView.swift
+ //main
 //  MovieA
 //
 //  Created by Jojo on 31/12/2025.

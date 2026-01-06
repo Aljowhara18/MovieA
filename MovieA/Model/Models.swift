@@ -7,7 +7,7 @@
 import Foundation
 
 // MARK: - Movies (Airtable "movies" table)
-
+/*
 struct MoviesResponse: Codable {
     let records: [MovieRecord]
 }
@@ -163,6 +163,8 @@ struct ActorRecord: Codable, Identifiable {
 struct ActorFields: Codable {
     let name: String?
     let image: String?
+    // Link to movie (consistent with Reviews)
+    let movie_id: String?
 }
 
 struct Actor: Identifiable {
@@ -194,6 +196,8 @@ struct DirectorRecord: Codable {
 struct DirectorFields: Codable {
     let name: String?
     let image: String?
+    // Link to movie (consistent with Reviews)
+    let movie_id: String?
 }
 
 struct Director: Identifiable {
@@ -240,4 +244,184 @@ struct Review: Identifiable {
         self.userName = record.fields.user_id ?? "Guest User"
     }
 }
+*/
+import Foundation
 
+// MARK: - Movies
+struct MoviesResponse: Codable {
+    let records: [MovieRecord]
+}
+
+struct MovieRecord: Codable, Identifiable {
+    let id: String
+    let createdTime: String
+    let fields: MovieFields
+}
+
+struct MovieFields: Codable {
+    let name: String?
+    let poster: String?
+    let story: String?
+    let runtime: String?
+    let genre: [String]?
+    let rating: String?
+    let IMDb_rating: Double?
+    let language: [String]?
+}
+
+struct Movie: Identifiable, Hashable {
+    // ✅ التأكد من وجود الـ Enum داخل المودل
+    enum Category: Hashable {
+        case drama, comedy, other
+    }
+
+    let id: String
+    let createdTime: String
+    let title: String
+    let posterURL: URL?
+    let story: String
+    let runtime: String
+    let genre: [String]
+    let ageRating: String
+    let imdbRating: Double?
+    let language: [String]
+    let ratingValue: Double
+    let subtitle: String
+
+    // ✅ إضافة الخاصية التي يطلبها الـ ViewModel
+    var category: Category {
+        let all = genre.joined(separator: " ").lowercased()
+        if all.contains("drama") { return .drama }
+        if all.contains("comedy") { return .comedy }
+        return .other
+    }
+
+    init(from record: MovieRecord) {
+        self.id = record.id
+        self.createdTime = record.createdTime
+        let f = record.fields
+        self.title = f.name ?? "Unknown"
+        self.posterURL = URL(string: f.poster ?? "")
+        self.story = f.story ?? ""
+        self.runtime = f.runtime ?? ""
+        self.genre = f.genre ?? []
+        self.ageRating = f.rating ?? ""
+        self.imdbRating = f.IMDb_rating
+        self.language = f.language ?? []
+        let imdb = f.IMDb_rating ?? 0
+        self.ratingValue = max(0, min(5, imdb / 2.0))
+        let gText = self.genre.first ?? "Movie"
+        self.subtitle = self.runtime.isEmpty ? gText : "\(gText), \(self.runtime)"
+    }
+}
+
+// MARK: - Actors & Junction
+struct ActorsResponse: Codable {
+    let records: [ActorRecord]
+}
+
+struct ActorRecord: Codable, Identifiable {
+    let id: String
+    let fields: ActorFields
+}
+
+struct ActorFields: Codable {
+    let name: String?
+    let image: String?
+}
+
+struct MovieActorsResponse: Codable {
+    let records: [MovieActorRecord]
+}
+
+struct MovieActorRecord: Codable {
+    let fields: MovieActorFields
+}
+
+struct MovieActorFields: Codable {
+    let actor_id: [String]?
+}
+
+struct Actor: Identifiable {
+    let id: String
+    let name: String
+    let imageURL: URL?
+
+    init(from record: ActorRecord) {
+        self.id = record.id
+        self.name = record.fields.name ?? "Unknown"
+        self.imageURL = URL(string: record.fields.image ?? "")
+    }
+}
+
+// MARK: - Directors & Junction
+struct DirectorsResponse: Codable {
+    let records: [DirectorRecord]
+}
+
+struct DirectorRecord: Codable {
+    let id: String
+    let fields: DirectorFields
+}
+
+struct DirectorFields: Codable {
+    let name: String?
+    let image: String?
+}
+
+struct MovieDirectorsResponse: Codable {
+    let records: [MovieDirectorRecord]
+}
+
+struct MovieDirectorRecord: Codable {
+    let fields: MovieDirectorFields
+}
+
+struct MovieDirectorFields: Codable {
+    let director_id: [String]?
+}
+
+struct Director: Identifiable {
+    let id: String
+    let name: String
+    let imageURL: URL?
+
+    init(from record: DirectorRecord) {
+        self.id = record.id
+        self.name = record.fields.name ?? "Unknown"
+        self.imageURL = URL(string: record.fields.image ?? "")
+    }
+}
+
+// MARK: - Reviews
+struct ReviewsResponse: Codable {
+    let records: [ReviewRecord]
+}
+
+struct ReviewRecord: Codable, Identifiable {
+    let id: String
+    let fields: ReviewFields
+}
+
+struct ReviewFields: Codable {
+    let rate: Double?
+    let review_text: String?
+    let movie_id: String?
+    let user_id: String?
+}
+
+struct Review: Identifiable {
+    let id: String
+    let rating: Double
+    let text: String
+    let movieID: String
+    let userName: String
+
+    init(from record: ReviewRecord) {
+        self.id = record.id
+        self.rating = record.fields.rate ?? 0.0
+        self.text = record.fields.review_text ?? ""
+        self.movieID = record.fields.movie_id ?? ""
+        self.userName = record.fields.user_id ?? "Guest User"
+    }
+}
