@@ -1,14 +1,8 @@
-//
-//  MovieDetailsViewModel.swift
-//  MovieA
-//
-//  Created by Jojo on 31/12/2025.
-
 import Foundation
 import SwiftUI
 import Combine
 
-
+// MARK: - MovieDetailsViewModel
 @MainActor
 final class MovieDetailsViewModel: ObservableObject {
 
@@ -21,10 +15,8 @@ final class MovieDetailsViewModel: ObservableObject {
 
     // MARK: - Private Properties
     private let movieID: String
-    private let baseURL = "https://api.airtable.com/v0/appsfcB6YESLj4NCN"
-    
-    // NOTE: Token should be moved to a secure place in production
-    private let token = "REDACTED_TOKEN"
+    private let baseURL = APIConfig.baseURL.absoluteString
+    private let token = APIConfig.token
 
     // MARK: - Init
     init(movieID: String) {
@@ -43,7 +35,6 @@ final class MovieDetailsViewModel: ObservableObject {
             let record: MovieRecord = try await makeRequest(url: url)
             self.movie = Movie(from: record)
 
-            // Fetch related data in parallel
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await self.fetchCastAndDirectorLogic() }
                 group.addTask { await self.fetchReviews() }
@@ -55,22 +46,19 @@ final class MovieDetailsViewModel: ObservableObject {
         isLoading = false
     }
 
-    // MARK: - Fetch Cast & Director Logic
+    // MARK: - Fetch Cast & Director
     private func fetchCastAndDirectorLogic() async {
         let movieName = movie?.title.lowercased() ?? ""
 
         do {
-            // Fetch all actors
             let actorsURL = URL(string: "\(baseURL)/actors")!
             let actorsResponse: ActorsResponse = try await makeRequest(url: actorsURL)
             let allActors = actorsResponse.records.map(Actor.init)
 
-            // Fetch all directors
             let directorsURL = URL(string: "\(baseURL)/directors")!
             let directorsResponse: DirectorsResponse = try await makeRequest(url: directorsURL)
             let allDirectors = directorsResponse.records.map(Director.init)
 
-            // Temporary matching logic based on movie title
             if movieName.contains("shawshank") {
                 actors = allActors.filter {
                     ["Tim Robbins", "Morgan Freeman", "Bob Gunton"].contains($0.name)
@@ -107,7 +95,7 @@ final class MovieDetailsViewModel: ObservableObject {
 
         do {
             let response: ReviewsResponse = try await makeRequest(url: url)
-            reviews = response.records.map(Review.init)
+            reviews = response.records.map(Review.init).sorted { $0.createdTime > $1.createdTime }
         } catch {
             print(error.localizedDescription)
         }
@@ -121,7 +109,7 @@ final class MovieDetailsViewModel: ObservableObject {
                 "review_text": text,
                 "rate": rate,
                 "movie_id": movieID,
-                "user_id": "Guest_User"
+                "user_id": CurrentUserStore.shared.name
             ]
         ]
 

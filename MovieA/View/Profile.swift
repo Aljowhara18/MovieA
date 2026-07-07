@@ -1,17 +1,13 @@
-//
-//  Profile.swift
-//  MovieApp-Team8-M
-//
-//  Created by Teif May on 05/07/1447 AH.
-//
-
 import SwiftUI
 import PhotosUI
 
+// MARK: - Profile
 struct Profile: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var profileModel = ProfileModel()
+    @ObservedObject private var profileModel = ProfileModel.shared
+    @ObservedObject private var savedStore = SavedMoviesStore.shared
     @State private var showProfileInfo = false
+    @State private var selectedSavedMovie: SavedMovie?
 
     var body: some View {
         ZStack {
@@ -77,13 +73,29 @@ struct Profile: View {
                     .foregroundStyle(.white)
                     .padding(.top, 4)
 
-                Spacer()
+                if savedStore.savedMovies.isEmpty {
+                    Spacer()
 
-                VStack {
-                    Image("No Saved Movies")
+                    VStack {
+                        Image("No Saved Movies")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 299)
+                } else {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVGrid(
+                            columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)],
+                            spacing: 14
+                        ) {
+                            ForEach(savedStore.savedMovies) { movie in
+                                SavedMoviePosterCard(movie: movie) {
+                                    selectedSavedMovie = movie
+                                }
+                            }
+                        }
+                        .padding(.top, 6)
+                    }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, 299)
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
@@ -92,27 +104,54 @@ struct Profile: View {
             ProfileInfoView()
                 .environmentObject(profileModel)
         }
+        .navigationDestination(item: $selectedSavedMovie) { movie in
+            MovieDetailsView(viewModel: MovieDetailsViewModel(movieID: movie.id))
+        }
         .navigationBarBackButtonHidden(true)
     }
 
     private var avatar: some View {
-        Group {
-            if let image = profileModel.avatar {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            } else if UIImage(named: "ProfileAvatar") != nil {
-                Image("ProfileAvatar")
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                ZStack {
-                    Circle().fill(.white.opacity(0.15))
-                    Image(systemName: "person.fill")
-                        .foregroundStyle(.white.opacity(0.8))
+        AvatarView(image: profileModel.avatar)
+    }
+}
+
+// MARK: - Saved Movie Poster Card
+private struct SavedMoviePosterCard: View {
+    let movie: SavedMovie
+    let onSelect: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+
+                if let url = movie.posterURL {
+                    AsyncImage(url: url) { phase in
+                        if let image = phase.image {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Image(systemName: "film")
+                                .foregroundStyle(.white.opacity(0.35))
+                        }
+                    }
+                } else {
+                    Image(systemName: "film")
+                        .foregroundStyle(.white.opacity(0.35))
                 }
             }
+            .frame(maxWidth: .infinity)
+            .frame(height: 200)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            Text(movie.title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect() }
     }
 }
 

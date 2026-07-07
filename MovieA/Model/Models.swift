@@ -1,251 +1,22 @@
-//
-//  Models.swift
-//  MovieA
-//
-//  Created by Jojo on 31/12/2025.
-
 import Foundation
+import Combine
 
-// MARK: - Movies (Airtable "movies" table)
-/*
-struct MoviesResponse: Codable {
-    let records: [MovieRecord]
-}
-
-struct MovieRecord: Codable, Identifiable {
-    let id: String
-    let createdTime: String
-    let fields: MovieFields
-}
-
-struct MovieFields: Codable {
-    let name: String?
-    let poster: String?
-    let story: String?
-    let runtime: String?
-    let genre: [String]?
-    let rating: String?
-    let IMDb_rating: Double?     // must match Airtable field name exactly
-    let language: [String]?
-}
-
-// MARK: - ✅ UI / Domain Movie model (USE THIS in Views + ViewModels)
-struct Movie: Identifiable, Hashable {
-
-    enum Category: Hashable {
-        case drama, comedy, other
-    }
-
-    let id: String
-    let createdTime: String
-
-    let title: String
-    let posterURL: URL?
-
-    let story: String
-    let runtime: String
-    let genre: [String]
-    let ageRating: String
-    let imdbRating: Double?
-    let language: [String]
-
-    /// 0...5 stars (derived from IMDb 0...10)
-    let ratingValue: Double
-
-    /// UI helper text under title (like: "Action, 2 hr 9 min")
-    let subtitle: String
-
-    // ✅ category from genre
-    var category: Category {
-        let all = genre.joined(separator: " ").lowercased()
-        if all.contains("drama") { return .drama }
-        if all.contains("comedy") { return .comedy }
-        return .other
-    }
-
-    init(from record: MovieRecord) {
-        self.id = record.id
-        self.createdTime = record.createdTime
-
-        let f = record.fields
-        self.title = f.name ?? "Unknown"
-
-        if let p = f.poster, !p.isEmpty, let url = URL(string: p) {
-            self.posterURL = url
-        } else {
-            self.posterURL = nil
-        }
-
-        self.story = f.story ?? ""
-        self.runtime = f.runtime ?? ""
-        self.genre = f.genre ?? []
-        self.ageRating = f.rating ?? ""
-        self.imdbRating = f.IMDb_rating
-        self.language = f.language ?? []
-
-        let imdb = f.IMDb_rating ?? 0
-        self.ratingValue = max(0, min(5, imdb / 2.0))
-
-        // ✅ Match screenshot style: "Action, 2 hr 9 min"
-        let gText = self.genre.first ?? "Movie"
-        if self.runtime.isEmpty {
-            self.subtitle = gText
-        } else {
-            self.subtitle = "\(gText), \(self.runtime)"
-        }
-    }
-}
-
-
-// MARK: - Optional API-only DTO (you can remove if unused)
-struct MovieDTO: Identifiable {
-    let id: String
-    let createdTime: String
-    let name: String?
-    let poster: String?
-    let story: String?
-    let runtime: String?
-    let genre: [String]?
-    let rating: String?
-    let imdbRating: Double?
-    let language: [String]?
-
-    init(from record: MovieRecord) {
-        self.id = record.id
-        self.createdTime = record.createdTime
-        self.name = record.fields.name
-        self.poster = record.fields.poster
-        self.story = record.fields.story
-        self.runtime = record.fields.runtime
-        self.genre = record.fields.genre
-        self.rating = record.fields.rating
-        self.imdbRating = record.fields.IMDb_rating
-        self.language = record.fields.language
-    }
-}
-
-// MARK: - Users (Airtable "users" table)
-
+// MARK: - Users
 struct UsersResponse: Codable {
     let records: [UserRecord]
 }
 
 struct UserRecord: Codable, Identifiable {
     let id: String
-    let createdTime: String
+    let createdTime: String?
     let fields: UserFields
 }
 
 struct UserFields: Codable {
     let name: String
-    let password: String
     let email: String
-    let profileImage: String
-
-    enum CodingKeys: String, CodingKey {
-        case name, password, email
-        case profileImage = "profile_image"
-    }
+    let password: String?
 }
-
-// MARK: - Actors (Airtable "actors" table)
-
-struct ActorsResponse: Codable {
-    let records: [ActorRecord]
-}
-
-struct ActorRecord: Codable, Identifiable {
-    let id: String
-    let createdTime: String
-    let fields: ActorFields
-}
-
-struct ActorFields: Codable {
-    let name: String?
-    let image: String?
-    // Link to movie (consistent with Reviews)
-    let movie_id: String?
-}
-
-struct Actor: Identifiable {
-    let id: String
-    let name: String
-    let imageURL: URL?
-
-    init(from record: ActorRecord) {
-        self.id = record.id
-        self.name = record.fields.name ?? "Unknown"
-        if let s = record.fields.image, !s.isEmpty {
-            self.imageURL = URL(string: s)
-        } else {
-            self.imageURL = nil
-        }
-    }
-}
-
-// MARK: - Directors Models
-struct DirectorsResponse: Codable {
-    let records: [DirectorRecord]
-}
-
-struct DirectorRecord: Codable {
-    let id: String
-    let fields: DirectorFields
-}
-
-struct DirectorFields: Codable {
-    let name: String?
-    let image: String?
-    // Link to movie (consistent with Reviews)
-    let movie_id: String?
-}
-
-struct Director: Identifiable {
-    let id: String
-    let name: String
-    let imageURL: URL?
-
-    init(from record: DirectorRecord) {
-        self.id = record.id
-        self.name = record.fields.name ?? "Unknown Director"
-        self.imageURL = URL(string: record.fields.image ?? "")
-    }
-}
-// MARK: - Review Models
-struct ReviewsResponse: Codable {
-    let records: [ReviewRecord]
-}
-
-struct ReviewRecord: Codable, Identifiable {
-    let id: String
-    let fields: ReviewFields
-}
-
-struct ReviewFields: Codable {
-    let rate: Double?
-    let review_text: String?
-    let movie_id: String?
-    let user_id: String?
-}
-
-
-struct Review: Identifiable {
-    let id: String
-    let rating: Double
-    let text: String
-    let movieID: String
-    let userName: String // سنستخدم الـ user_id كاسم مؤقتاً
-
-    init(from record: ReviewRecord) {
-        self.id = record.id
-        self.rating = record.fields.rate ?? 0.0
-        self.text = record.fields.review_text ?? ""
-        self.movieID = record.fields.movie_id ?? ""
-        self.userName = record.fields.user_id ?? "Guest User"
-    }
-}
-*/
-import Foundation
 
 // MARK: - Movies
 struct MoviesResponse: Codable {
@@ -270,7 +41,6 @@ struct MovieFields: Codable {
 }
 
 struct Movie: Identifiable, Hashable {
-    // ✅ التأكد من وجود الـ Enum داخل المودل
     enum Category: Hashable {
         case drama, comedy, other
     }
@@ -288,7 +58,6 @@ struct Movie: Identifiable, Hashable {
     let ratingValue: Double
     let subtitle: String
 
-    // ✅ إضافة الخاصية التي يطلبها الـ ViewModel
     var category: Category {
         let all = genre.joined(separator: " ").lowercased()
         if all.contains("drama") { return .drama }
@@ -400,6 +169,7 @@ struct ReviewsResponse: Codable {
 
 struct ReviewRecord: Codable, Identifiable {
     let id: String
+    let createdTime: String?
     let fields: ReviewFields
 }
 
@@ -416,6 +186,7 @@ struct Review: Identifiable {
     let text: String
     let movieID: String
     let userName: String
+    let createdTime: String
 
     init(from record: ReviewRecord) {
         self.id = record.id
@@ -423,5 +194,106 @@ struct Review: Identifiable {
         self.text = record.fields.review_text ?? ""
         self.movieID = record.fields.movie_id ?? ""
         self.userName = record.fields.user_id ?? "Guest User"
+        self.createdTime = record.createdTime ?? ""
+    }
+}
+
+// MARK: - Saved Movies
+struct SavedMovie: Codable, Identifiable, Hashable {
+    let id: String
+    let title: String
+    let posterURLString: String?
+    let subtitle: String
+    let ratingValue: Double
+
+    var posterURL: URL? {
+        guard let posterURLString else { return nil }
+        return URL(string: posterURLString)
+    }
+
+    init(from movie: Movie) {
+        self.id = movie.id
+        self.title = movie.title
+        self.posterURLString = movie.posterURL?.absoluteString
+        self.subtitle = movie.subtitle
+        self.ratingValue = movie.ratingValue
+    }
+}
+
+final class SavedMoviesStore: ObservableObject {
+    static let shared = SavedMoviesStore()
+
+    @Published private(set) var savedMovies: [SavedMovie] = []
+
+    private let defaultsKey = "com.movieA.savedMovies"
+
+    private init() {
+        load()
+    }
+
+    func isSaved(id: String) -> Bool {
+        savedMovies.contains { $0.id == id }
+    }
+
+    func toggle(movie: Movie) {
+        if isSaved(id: movie.id) {
+            savedMovies.removeAll { $0.id == movie.id }
+        } else {
+            savedMovies.append(SavedMovie(from: movie))
+        }
+        persist()
+    }
+
+    private func persist() {
+        guard let data = try? JSONEncoder().encode(savedMovies) else { return }
+        UserDefaults.standard.set(data, forKey: defaultsKey)
+    }
+
+    private func load() {
+        guard let data = UserDefaults.standard.data(forKey: defaultsKey),
+              let decoded = try? JSONDecoder().decode([SavedMovie].self, from: data) else { return }
+        savedMovies = decoded
+    }
+}
+
+// MARK: - Current User
+final class CurrentUserStore: ObservableObject {
+    static let shared = CurrentUserStore()
+
+    @Published private(set) var userID: String?
+    @Published private(set) var name: String = "Guest"
+    @Published private(set) var email: String = ""
+
+    private let idKey = "com.movieA.currentUser.id"
+    private let nameKey = "com.movieA.currentUser.name"
+    private let emailKey = "com.movieA.currentUser.email"
+
+    private init() {
+        let defaults = UserDefaults.standard
+        userID = defaults.string(forKey: idKey)
+        name = defaults.string(forKey: nameKey) ?? "Guest"
+        email = defaults.string(forKey: emailKey) ?? ""
+    }
+
+    func signIn(id: String, name: String, email: String) {
+        self.userID = id
+        self.name = name
+        self.email = email
+
+        let defaults = UserDefaults.standard
+        defaults.set(id, forKey: idKey)
+        defaults.set(name, forKey: nameKey)
+        defaults.set(email, forKey: emailKey)
+    }
+
+    func signOut() {
+        userID = nil
+        name = "Guest"
+        email = ""
+
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: idKey)
+        defaults.removeObject(forKey: nameKey)
+        defaults.removeObject(forKey: emailKey)
     }
 }

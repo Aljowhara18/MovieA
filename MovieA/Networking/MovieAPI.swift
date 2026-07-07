@@ -1,42 +1,12 @@
-//
-//  MovieAPI.swift
-//  MovieA
-//
-//  Created by Teif May on 16/07/1447 AH.
-//
-
-//
-//  APIServices.swift
-//  MovieA
-//
-//  Created by Deemah Alhazmi on 04/01/2026.
-
 import Foundation
 
-// MARK: - MISSING MODELS (وضعتها هنا لحل مشكلة الـ Scope نهائياً)
-struct UsersResponse: Codable {
-    let records: [UserRecord]
-}
-
-struct UserRecord: Codable, Identifiable {
-    let id: String
-    let createdTime: String?
-    let fields: UserFields
-}
-
-struct UserFields: Codable {
-    let name: String
-    let email: String
-    let password: String?
-}
-
-// MARK: - API Config
+// MARK: - Config
 enum APIConfig {
     static let baseURL = URL(string: "https://api.airtable.com/v0/appsfcB6YESLj4NCN")!
-    static let token = "REDACTED_TOKEN"
+    static let token = Bundle.main.infoDictionary?["API_TOKEN"] as? String ?? ""
 }
 
-// MARK: - Generic API Client
+// MARK: - Client
 enum APIClient {
 
     private static func authorizedRequest(url: URL) -> URLRequest {

@@ -1,20 +1,13 @@
-//
-//  MoviesCenter.swift
-//  MovieApp-Team8-M
-//
-//  Created by Deemah Alhazmi on 23/12/2025.
-//
-
 import SwiftUI
 import Observation
 
 // MARK: - MoviesCenter
-
 struct MoviesCenter: View {
     @State private var query = ""
     @State private var selectedMovie: Movie?
     @State private var showProfile = false
-    @State private var vm = MoviesCenterVM()
+    @State private var vm = MoviesCenterViewModel()
+    @ObservedObject private var profileModel = ProfileModel.shared
 
     var body: some View {
         NavigationStack {
@@ -33,9 +26,7 @@ struct MoviesCenter: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showProfile = true } label: {
-                        Image("ProfileAvatar")
-                            .resizable()
-                            .scaledToFill()
+                        AvatarView(image: profileModel.avatar)
                             .frame(width: 32, height: 32)
                             .clipShape(Circle())
                     }
@@ -51,8 +42,6 @@ struct MoviesCenter: View {
         }
         .tint(Color("AccentColor", fallback: .yellow))
     }
-
-    // MARK: - UI
 
     @ViewBuilder
     private var content: some View {
@@ -91,19 +80,15 @@ struct MoviesCenter: View {
                             selectedMovie = movie
                         }
 
-                        // ✅ Match screenshot: Drama row
                         GenreRow(
                             title: "Drama",
-                            actionTitle: "Show more",
                             items: vm.byCategory(.drama)
                         ) { movie in
                             selectedMovie = movie
                         }
 
-                        // ✅ Match screenshot: Comedy row
                         GenreRow(
                             title: "Comedy",
-                            actionTitle: "Show more",
                             items: vm.byCategory(.comedy)
                         ) { movie in
                             selectedMovie = movie
@@ -116,8 +101,6 @@ struct MoviesCenter: View {
             }
         }
     }
-
-    // MARK: - Search logic
 
     private var isSearching: Bool {
         !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -135,7 +118,6 @@ struct MoviesCenter: View {
 }
 
 // MARK: - Section Title
-
 private struct SectionTitle: View {
     let title: String
     init(_ title: String) { self.title = title }
@@ -149,7 +131,6 @@ private struct SectionTitle: View {
 }
 
 // MARK: - High Rated Carousel
-
 private struct HighRatedCarousel: View {
     let items: [Movie]
     let onSelect: (Movie) -> Void
@@ -167,6 +148,7 @@ private struct HighRatedCarousel: View {
     }
 }
 
+// MARK: - Movie Hero Card
 private struct MovieHeroCard: View {
     let movie: Movie
     let onSelect: (Movie) -> Void
@@ -209,30 +191,17 @@ private struct MovieHeroCard: View {
     }
 }
 
-// MARK: - Genre Row (Horizontal list)
-
+// MARK: - Genre Row
 private struct GenreRow: View {
     let title: String
-    let actionTitle: String
     let items: [Movie]
     let onSelect: (Movie) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(title)
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(.white)
-
-                Spacer()
-
-                Button(actionTitle) {
-                    // later: push a grid/list screen
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color("AccentColor", fallback: .yellow))
-                .buttonStyle(.plain)
-            }
+            Text(title)
+                .font(.system(size: 26, weight: .bold))
+                .foregroundStyle(.white)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
@@ -248,7 +217,6 @@ private struct GenreRow: View {
 }
 
 // MARK: - Search Results Grid
-
 private struct SearchResultsGrid: View {
     let items: [Movie]
     let onSelect: (Movie) -> Void
@@ -279,7 +247,6 @@ private struct SearchResultsGrid: View {
 }
 
 // MARK: - Poster Card
-
 private struct PosterCard: View {
     let movie: Movie
     let onSelect: (Movie) -> Void
@@ -297,8 +264,7 @@ private struct PosterCard: View {
     }
 }
 
-// MARK: - Poster Image (API only)
-
+// MARK: - Poster Image
 private struct PosterImageView: View {
     let movie: Movie
 
@@ -334,10 +300,9 @@ private struct PosterImageView: View {
     }
 }
 
-// MARK: - Stars
-
+// MARK: - Star Rating
 private struct StarRatingView: View {
-    let value: Double // 0...5
+    let value: Double
 
     var body: some View {
         let full = Int(value.rounded(.down))
@@ -358,8 +323,6 @@ private struct StarRatingView: View {
         return "star"
     }
 }
-
-// MARK: - Safe Color fallback
 
 private extension Color {
     init(_ assetName: String, fallback: Color) {

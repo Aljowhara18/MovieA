@@ -1,6 +1,7 @@
 import SwiftUI
 import PhotosUI
 
+// MARK: - EditProfileView
 struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var profile: ProfileModel
@@ -99,23 +100,7 @@ struct EditProfileView: View {
     }
 
     private var avatarView: some View {
-        Group {
-            if let img = newAvatar {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-            } else if UIImage(named: "ProfileAvatar") != nil {
-                Image("ProfileAvatar")
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                ZStack {
-                    Circle().fill(.white.opacity(0.15))
-                    Image(systemName: "person.fill")
-                        .foregroundStyle(.white.opacity(0.8))
-                }
-            }
-        }
+        AvatarView(image: newAvatar)
     }
 
     private func save() {
@@ -134,6 +119,7 @@ struct EditProfileView: View {
     }
 }
 
+// MARK: - Labeled Field Row
 private struct LabeledFieldRow: View {
     let title: String
     @Binding var text: String
@@ -157,7 +143,7 @@ private struct LabeledFieldRow: View {
 #Preview {
     NavigationStack {
         EditProfileView()
-            .environmentObject(ProfileModel())
+            .environmentObject(ProfileModel.shared)
             .preferredColorScheme(.dark)
     }
 }

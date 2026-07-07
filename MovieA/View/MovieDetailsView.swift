@@ -1,16 +1,10 @@
-//  MovieDetailsView.swift
-//  MovieA
-//
-//  Created by Jojo on 31/12/2025.
-//
 import SwiftUI
-
-
 
 // MARK: - Main View
 struct MovieDetailsView: View {
     @StateObject var viewModel: MovieDetailsViewModel
     @State private var newReviewText: String = ""
+    @State private var newReviewRating: Int = 5
 
     var body: some View {
         ZStack {
@@ -22,10 +16,9 @@ struct MovieDetailsView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
                         
-                        HeaderSection(movieName: movie.title, posterURL: movie.posterURL)
+                        HeaderSection(movie: movie)
 
                         VStack(alignment: .leading, spacing: 25) {
-                            // تم تعديل المحاذاة هنا لتكون لليسار
                             InfoGridView(
                                 duration: movie.runtime,
                                 language: movie.language.joined(separator: ", "),
@@ -37,22 +30,26 @@ struct MovieDetailsView: View {
                             
                             CastSection(director: viewModel.director, actors: viewModel.actors)
 
-                            // إضافة ريفيو
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Add Your Review").font(.headline).foregroundColor(.white)
+
+                                ReviewRatingPicker(rating: $newReviewRating)
+
                                 HStack {
                                     TextField("Write your opinion...", text: $newReviewText)
                                         .padding(12)
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(10)
                                         .foregroundColor(.white)
-                                    
+
                                     Button(action: {
                                         if !newReviewText.isEmpty {
                                             let textToPost = newReviewText
+                                            let rateToPost = newReviewRating
                                             Task {
-                                                await viewModel.postReview(text: textToPost, rate: 5)
+                                                await viewModel.postReview(text: textToPost, rate: rateToPost)
                                                 newReviewText = ""
+                                                newReviewRating = 5
                                                 hideKeyboard()
                                             }
                                         }
@@ -83,15 +80,34 @@ struct MovieDetailsView: View {
                 .ignoresSafeArea(edges: .top)
             }
         }
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
-// MARK: - InfoGridView (التعديل المطلوب هنا)
+// MARK: - Review Rating Picker
+struct ReviewRatingPicker: View {
+    @Binding var rating: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(1...5, id: \.self) { star in
+                Image(systemName: star <= rating ? "star.fill" : "star")
+                    .foregroundColor(.yellow)
+                    .font(.system(size: 20))
+                    .onTapGesture {
+                        rating = star
+                    }
+            }
+        }
+    }
+}
+
+// MARK: - Info Grid
 struct InfoGridView: View {
     let duration, language, genre, age: String
     
     var body: some View {
-        // تم تغيير الـ alignment إلى .leading لجعل الشبكة تبدأ من اليسار
         LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)], spacing: 20) {
             infoItem(title: "Duration", value: duration)
             infoItem(title: "Language", value: language)
@@ -101,35 +117,36 @@ struct InfoGridView: View {
     }
     
     func infoItem(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) { // محاذاة النص داخل العنصر لليسار
+        VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.system(size: 14, weight: .bold)).foregroundColor(.white)
             Text(value).font(.system(size: 14)).foregroundColor(.gray)
         }
     }
 }
 
-// MARK: - بقية المكونات (ثابتة بدون تغيير)
-
+// MARK: - Header Section
 struct HeaderSection: View {
-    let movieName: String
-    let posterURL: URL?
+    let movie: Movie
     @Environment(\.dismiss) var dismiss
+    @ObservedObject private var savedStore = SavedMoviesStore.shared
+
+    private var isSaved: Bool { savedStore.isSaved(id: movie.id) }
 
     var body: some View {
         ZStack(alignment: .top) {
             ZStack(alignment: .bottomLeading) {
-                AsyncImage(url: posterURL) { phase in
+                AsyncImage(url: movie.posterURL) { phase in
                     if let img = phase.image {
                         img.resizable().aspectRatio(contentMode: .fill)
                     } else { Color.gray.opacity(0.2) }
                 }
                 .frame(width: UIScreen.main.bounds.width, height: 448)
                 .clipped()
-                
+
                 LinearGradient(colors: [.clear, .black.opacity(0.8)], startPoint: .center, endPoint: .bottom)
-                Text(movieName).font(.system(size: 32, weight: .bold)).foregroundColor(.white).padding()
+                Text(movie.title).font(.system(size: 32, weight: .bold)).foregroundColor(.white).padding()
             }
-            
+
             HStack {
                 Button(action: { dismiss() }) {
                     Image(systemName: "chevron.left").font(.title3).padding(12)
@@ -141,8 +158,12 @@ struct HeaderSection: View {
                         Image(systemName: "square.and.arrow.up").font(.title3).padding(12)
                             .background(Color.black.opacity(0.5)).clipShape(Circle())
                     }
-                    Button(action: { }) {
-                        Image(systemName: "bookmark").font(.title3).padding(12)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3)) {
+                            savedStore.toggle(movie: movie)
+                        }
+                    }) {
+                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark").font(.title3).padding(12)
                             .background(Color.black.opacity(0.5)).clipShape(Circle())
                     }
                 }
@@ -150,9 +171,9 @@ struct HeaderSection: View {
             .foregroundColor(.white).padding(.top, 60).padding(.horizontal)
         }
     }
-    
+
     func shareMovie() {
-        let movieText = "Check out this movie: \(movieName)!"
+        let movieText = "Check out this movie: \(movie.title)!"
         let activityVC = UIActivityViewController(activityItems: [movieText], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootVC = windowScene.windows.first?.rootViewController {
@@ -161,6 +182,7 @@ struct HeaderSection: View {
     }
 }
 
+// MARK: - Cast Section
 struct CastSection: View {
     let director: Director?
     let actors: [Actor]
@@ -191,6 +213,7 @@ struct CastSection: View {
     }
 }
 
+// MARK: - Story Section
 struct StorySection: View {
     let story: String
     var body: some View {
@@ -201,6 +224,7 @@ struct StorySection: View {
     }
 }
 
+// MARK: - Ratings & Reviews
 struct RatingsAndReviewsSection: View {
     let rating: Double
     let reviews: [Review]
@@ -226,6 +250,7 @@ struct RatingsAndReviewsSection: View {
     }
 }
 
+// MARK: - Review Card
 struct ReviewCard: View {
     let review: Review
     var onDelete: () -> Void
@@ -237,7 +262,7 @@ struct ReviewCard: View {
                 Spacer()
                 Button(action: onDelete) { Image(systemName: "trash").font(.caption).foregroundColor(.red.opacity(0.7)) }
             }
-            Text(String(repeating: "⭐", count: Int(max(1, review.rating / 2.0)))).font(.caption)
+            Text(String(repeating: "⭐", count: Int(max(1, min(5, review.rating))))).font(.caption)
             Text(review.text).font(.system(size: 13)).foregroundColor(.gray).lineLimit(3)
         }
         .padding().frame(width: 280, height: 160).background(Color.white.opacity(0.06)).cornerRadius(15)

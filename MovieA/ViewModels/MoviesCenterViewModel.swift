@@ -1,16 +1,10 @@
-//
-//  MoviesCenterVM.swift
-//  MovieA
-//
-//  Created by Deemah Alhazmi on 04/01/2026.
-//
-
 import Foundation
 import Observation
 
 @MainActor
 @Observable
-final class MoviesCenterVM {
+// MARK: - MoviesCenterViewModel
+final class MoviesCenterViewModel {
 
     var movies: [Movie] = []
     var isLoading: Bool = false
@@ -38,5 +32,3 @@ final class MoviesCenterVM {
         movies.filter { $0.category == c }
     }
 }
-
-

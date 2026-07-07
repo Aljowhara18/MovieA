@@ -1,5 +1,6 @@
 import SwiftUI
 
+// MARK: - ProfileInfoView
 struct ProfileInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var profile: ProfileModel
@@ -115,30 +116,14 @@ struct ProfileInfoView: View {
     }
 
     private var avatar: some View {
-        Group {
-            if let img = profile.avatar {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-            } else if UIImage(named: "ProfileAvatar") != nil {
-                Image("ProfileAvatar")
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                ZStack {
-                    Circle().fill(.white.opacity(0.15))
-                    Image(systemName: "person.fill")
-                        .foregroundStyle(.white.opacity(0.8))
-                }
-            }
-        }
+        AvatarView(image: profile.avatar)
     }
 }
 
 #Preview {
     NavigationStack {
         ProfileInfoView()
-            .environmentObject(ProfileModel())
+            .environmentObject(ProfileModel.shared)
             .preferredColorScheme(.dark)
     }
 }
