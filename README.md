@@ -1,3 +1,4 @@
+
 # MovieA
 
 A native iOS movie discovery app built with SwiftUI. Users sign in, browse and search movies, view details, save favorites, and leave star ratings and reviews.
