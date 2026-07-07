@@ -1,10 +1,3 @@
-//
-//  Item.swift
-//  MovieA
-//
-//  Created by Jojo on 31/12/2025.
-//
-
 import Foundation
 import SwiftData
 
