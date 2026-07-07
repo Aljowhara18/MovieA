@@ -1,36 +1,47 @@
 # MovieA
 
-An iOS app for browsing movies, viewing details, and leaving ratings/reviews. Built with SwiftUI.
+A native iOS movie discovery app built with SwiftUI. Users sign in, browse and search movies, view details, save favorites, and leave star ratings and reviews.
+
+## Screens
+
+- **Sign In** — authenticates against a real backend (Airtable `users` table)
+- **Movies Center** — High Rated carousel, genre rows (Drama, Comedy), and search
+- **Movie Details** — poster, story, cast & director, duration/genre/age, ratings and reviews
+- **Profile** — user info, saved movies, edit name/avatar
 
 ## Features
 
-- Sign in with a real account (checked against an Airtable backend)
-- Browse movies by category (High Rated, Drama, Comedy) with search
-- Movie details: poster, story, cast & director, duration, genre, age rating
-- Save/bookmark movies to your profile
-- Share a movie
-- Rate and review movies (star picker, newest reviews shown first)
-- Edit profile (name, avatar) with local persistence
+- Real authentication (email/password checked against the backend, no mock login)
+- Browse movies by category with live search
+- Save/bookmark movies to a personal collection
+- Share a movie via the system share sheet
+- Rate and review movies with a star picker; newest review shown first
+- Edit profile name and avatar, synced across the app and persisted locally
 
-## Tech Stack
+## Architecture
 
-- SwiftUI, Swift Concurrency (async/await)
-- MVVM architecture (View / ViewModel / Model)
-- [Airtable](https://airtable.com) REST API as the backend (movies, actors, directors, reviews, users tables)
-- UserDefaults for local persistence (saved movies, profile, session)
-
-## Project Structure
+MVVM, with a clear separation between layers:
 
 ```
 MovieA/
-├── Model/          # Data models + Airtable-backed stores
-├── Networking/      # API client and services
-├── View/            # SwiftUI screens and components
-├── ViewModels/       # Per-screen view models
+├── Model/        # Data models, decoding, and persisted stores (saved movies, current user, profile)
+├── Networking/   # API client and services (Airtable REST API)
+├── View/         # SwiftUI screens and reusable components
+└── ViewModels/   # Per-screen view models (business logic, no UI)
 ```
+
+## Tech Stack
+
+- **UI:** SwiftUI
+- **Concurrency:** Swift async/await
+- **Backend:** [Airtable](https://airtable.com) REST API (`movies`, `actors`, `directors`, `reviews`, `users` tables)
+- **Persistence:** UserDefaults (saved movies, profile, session)
 
 ## Setup
 
 1. Open `MovieA.xcodeproj` in Xcode.
-2. Add your own Airtable Personal Access Token to `MovieA/Secrets.xcconfig`.
-3. Build and run on any iOS simulator.
+2. Create an Airtable Personal Access Token (scopes: `data.records:read`, `data.records:write`) with access to the project's base, and add it to `MovieA/Secrets.xcconfig`:
+   ```
+   API_TOKEN = your_token_here
+   ```
+3. Build and run on any iOS simulator (iOS 17+).
